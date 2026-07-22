@@ -263,6 +263,16 @@
 </div>
 
 <input type="file" id="filePicker" accept="image/*" multiple style="display:none" />
+<input type="file" id="cameraPicker" accept="image/*" capture="environment" style="display:none" />
+
+<div class="sheet-backdrop" id="photoSheet">
+  <div class="sheet">
+    <div class="sheet-title">Add photo</div>
+    <button class="btn" data-photo="camera">📷 Take photo</button>
+    <button class="btn sec" data-photo="library">🖼 Choose from library</button>
+    <button class="btn ghost" data-photo="cancel">Cancel</button>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -446,14 +456,30 @@ function delItem(id){ items=items.filter(i=>i.id!==id); saveItems(); render(); }
 function itemById(id){ return items.find(i=>i.id===id); }
 
 /* ---------- photo ops ---------- */
-$("#filePicker").addEventListener("change", async e=>{
-  const files=[...e.target.files]; e.target.value="";
+async function addPhotosFromFiles(files){
   const it=itemById(activePhotoTargetId); if(!it) return;
   for(const f of files){
     if(it.photos.length>=MAX_PHOTOS_PER_ITEM){toast(`Max ${MAX_PHOTOS_PER_ITEM} photos per item`);break;}
     try{ it.photos.push(await fileToScaledDataURL(f)); }catch(_){ toast("Couldn't read one photo"); }
   }
   saveItems(); render();
+}
+$("#filePicker").addEventListener("change", async e=>{
+  const files=[...e.target.files]; e.target.value="";
+  await addPhotosFromFiles(files);
+});
+$("#cameraPicker").addEventListener("change", async e=>{
+  const files=[...e.target.files]; e.target.value="";
+  await addPhotosFromFiles(files);
+});
+
+/* choose camera vs library */
+$("#photoSheet").addEventListener("click",e=>{
+  if(e.target.id==="photoSheet"){ $("#photoSheet").classList.remove("show"); return; }
+  const p=e.target.closest("[data-photo]")?.dataset.photo; if(!p) return;
+  $("#photoSheet").classList.remove("show");
+  if(p==="camera") $("#cameraPicker").click();
+  else if(p==="library") $("#filePicker").click();
 });
 
 /* ---------- delegated events ---------- */
@@ -461,7 +487,7 @@ $("#items").addEventListener("click",e=>{
   const act=e.target.closest("[data-act]")?.dataset.act; if(!act) return;
   const itemEl=e.target.closest(".item"); const id=itemEl.dataset.id; const it=itemById(id);
   if(act==="del"){ if(confirm("Delete this item?")) delItem(id); }
-  else if(act==="addphoto"){ activePhotoTargetId=id; $("#filePicker").click(); }
+  else if(act==="addphoto"){ activePhotoTargetId=id; $("#photoSheet").classList.add("show"); }
   else if(act==="delphoto"){ const i=+e.target.dataset.i; it.photos.splice(i,1); saveItems(); render(); }
   else if(act==="reanalyze"){ analyzeItems([it]); }
   else if(act==="toggleEdit"){ e.target.closest(".results")?.classList.toggle("editing"); }
