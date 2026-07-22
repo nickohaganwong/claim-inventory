@@ -616,8 +616,11 @@ async function pushToSheet(list){
       notes:r.notes, photo:it.photos[0]||""
     };
     try{
-      await fetch(cfg.sheetUrl,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
-    }catch(e){ /* Apps Script often blocks CORS reads; the write still lands */ }
+      // NOTE: no application/json header on purpose — that triggers a CORS
+      // preflight (OPTIONS) which Apps Script can't answer, killing the POST.
+      // A plain-text body is a "simple request" and goes straight through.
+      await fetch(cfg.sheetUrl,{method:"POST",body:JSON.stringify(payload)});
+    }catch(e){ /* opaque response is expected; the write still lands */ }
   }
   toast("Synced to Google Sheet");
 }
