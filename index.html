@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Claim Inventory</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a;
+    --text:#e7e9ee; --muted:#9aa3b2; --accent:#4f8cff; --accent2:#2f6bde;
+    --good:#37c978; --warn:#f0b429; --bad:#f26a6a;
+    --chip:#232833;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.45;
+    -webkit-text-size-adjust:100%;
+    padding-bottom:120px;
+  }
+  header{
+    position:sticky; top:0; z-index:20; background:rgba(15,17,21,.92);
+    backdrop-filter:blur(8px); border-bottom:1px solid var(--line);
+    padding:14px 16px calc(14px + env(safe-area-inset-top)); padding-top:14px;
+  }
+  header .row{display:flex;align-items:center;gap:12px;justify-content:space-between}
+  h1{font-size:18px;margin:0;font-weight:650;letter-spacing:.2px}
+  .sub{color:var(--muted);font-size:12px;margin-top:2px}
+  main{max-width:900px;margin:0 auto;padding:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:0 0 10px}
+  label{display:block;font-size:12px;color:var(--muted);margin:0 0 4px}
+  input[type=text],input[type=password],input[type=url],input[type=number],select,textarea{
+    width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    border-radius:10px;padding:10px 12px;font-size:15px;font-family:inherit;
+  }
+  textarea{resize:vertical;min-height:44px}
+  .field{margin-bottom:10px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:560px){.grid2{grid-template-columns:1fr}}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--accent);color:#fff;border:none;border-radius:11px;
+    padding:12px 16px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .btn:hover{background:var(--accent2)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.sec{background:var(--chip);color:var(--text);border:1px solid var(--line)}
+  .btn.sec:hover{background:#2b313d}
+  .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);padding:8px 12px;font-size:13px}
+  .btn.sm{padding:8px 12px;font-size:13px;border-radius:9px}
+  .btn.danger{background:transparent;color:var(--bad);border:1px solid #4a2a2f}
+  .btnrow{display:flex;flex-wrap:wrap;gap:10px}
+  details.setup summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;font-weight:600}
+  details.setup summary::-webkit-details-marker{display:none}
+  details.setup summary .chev{transition:transform .2s}
+  details.setup[open] summary .chev{transform:rotate(90deg)}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .warn{font-size:12px;color:var(--warn);margin-top:6px}
+  .item{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:14px;overflow:hidden}
+  .item-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;gap:10px;border-bottom:1px solid var(--line)}
+  .item-num{font-size:12px;color:var(--muted);font-weight:600}
+  .status{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .status.idle{background:var(--chip);color:var(--muted)}
+  .status.queued{background:#243043;color:#7fb0ff}
+  .status.working{background:#243b2c;color:#77e0a3}
+  .status.done{background:#1f3b2b;color:var(--good)}
+  .status.error{background:#3b2226;color:var(--bad)}
+  .item-body{padding:14px}
+  .thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  .thumb{position:relative;width:76px;height:76px;border-radius:9px;overflow:hidden;border:1px solid var(--line);background:#000}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb .x{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;border:none;font-size:12px;line-height:20px;cursor:pointer;padding:0}
+  .addphoto{width:76px;height:76px;border-radius:9px;border:1px dashed var(--line);background:var(--panel2);color:var(--muted);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;font-size:11px;cursor:pointer}
+  .addphoto svg{width:20px;height:20px}
+  .results{border-top:1px solid var(--line);margin-top:12px;padding-top:12px}
+  .fieldline{display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;margin-bottom:8px}
+  @media(max-width:560px){.fieldline{grid-template-columns:1fr;gap:3px;margin-bottom:12px}}
+  .fieldline label{margin:0}
+  .links a{display:block;color:var(--accent);font-size:13px;text-decoration:none;margin:3px 0;word-break:break-all}
+  .links a:hover{text-decoration:underline}
+  .conf{display:inline-block;font-size:11px;padding:2px 8px;border-radius:12px;background:var(--chip);color:var(--muted)}
+  .conf.high{color:var(--good)} .conf.medium{color:var(--warn)} .conf.low{color:var(--bad)}
+  .equiv{display:inline-block;font-size:11px;padding:2px 8px;border-radius:12px;background:#3a3320;color:var(--warn);margin-left:6px}
+  .err-msg{color:var(--bad);font-size:13px;margin-top:8px}
+  .footer-bar{
+    position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(23,26,33,.96);
+    backdrop-filter:blur(8px);border-top:1px solid var(--line);
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  }
+  .footer-bar .inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between}
+  .totals{font-size:13px;color:var(--muted)}
+  .totals b{color:var(--text);font-size:16px}
+  .progress{height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:8px;display:none}
+  .progress.show{display:block}
+  .progress > div{height:100%;background:var(--accent);width:0%;transition:width .3s}
+  .empty{text-align:center;color:var(--muted);padding:40px 16px;font-size:14px}
+  .tag{display:inline-block;background:var(--chip);color:var(--muted);font-size:11px;padding:2px 8px;border-radius:12px;margin-left:6px}
+  .toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%);background:#2b313d;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;z-index:50;box-shadow:0 6px 24px rgba(0,0,0,.4);opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%}
+  .toast.show{opacity:1}
+  hr{border:none;border-top:1px solid var(--line);margin:14px 0}
+  code{background:var(--panel2);padding:1px 5px;border-radius:5px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <div>
+      <h1>Claim Inventory</h1>
+      <div class="sub">Photograph items → AI identifies & prices → export for your adjuster</div>
+    </div>
+    <button class="btn sm sec" id="btnConfig">Setup</button>
+  </div>
+</header>
+
+<main>
+  <div class="card" id="configCard" style="display:none">
+    <h2>Setup</h2>
+    <div class="field">
+      <label>Analysis endpoint</label>
+      <select id="mode">
+        <option value="proxy">Proxy (Netlify Function — key stays server-side, recommended)</option>
+        <option value="direct">Direct (enter Anthropic key in browser — testing only)</option>
+      </select>
+    </div>
+    <div class="field" id="proxyField">
+      <label>Proxy URL</label>
+      <input type="url" id="proxyUrl" placeholder="/.netlify/functions/analyze" />
+      <div class="hint">Deploy the included function and this default path works. Leave as-is if unsure.</div>
+    </div>
+    <div class="field" id="keyField" style="display:none">
+      <label>Anthropic API key</label>
+      <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off" />
+      <div class="warn">⚠ In Direct mode the key is stored in this browser and visible in the page. Don't use Direct on a public URL.</div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label>Model</label>
+        <input type="text" id="model" value="claude-sonnet-5" />
+        <div class="hint">Alternatives: <code>claude-opus-4-8</code> (most accurate), <code>claude-haiku-4-5-20251001</code> (cheapest)</div>
+      </div>
+      <div class="field">
+        <label>Region / currency context</label>
+        <input type="text" id="region" value="Windsor, Ontario, Canada — prices in CAD" />
+      </div>
+    </div>
+    <div class="field">
+      <label>Google Sheets sync URL (optional)</label>
+      <input type="url" id="sheetUrl" placeholder="https://script.google.com/macros/s/.../exec" />
+      <div class="hint">Paste your Apps Script Web App URL to also push rows to a Google Sheet. Optional — XLSX export works without it.</div>
+    </div>
+    <div class="btnrow">
+      <button class="btn sm" id="saveConfig">Save</button>
+      <button class="btn sm danger" id="clearAll">Clear all items</button>
+    </div>
+  </div>
+
+  <div id="items"></div>
+  <div class="empty" id="empty">No items yet. Tap <b>Add item</b> below, then attach one or more photos of that item.</div>
+</main>
+
+<div class="footer-bar">
+  <div class="inner">
+    <div class="totals">
+      <span id="countLbl">0 items</span> &nbsp;·&nbsp; est. <b id="totalLbl">$0</b> CAD
+    </div>
+    <div class="btnrow">
+      <button class="btn sec sm" id="addItem">＋ Add item</button>
+      <button class="btn sm" id="analyze">Analyze all</button>
+      <button class="btn sec sm" id="exportMenuBtn">Export ▾</button>
+    </div>
+  </div>
+  <div class="progress" id="progress"><div id="progressBar"></div></div>
+</div>
+
+<input type="file" id="filePicker" accept="image/*" multiple style="display:none" />
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   Claim Inventory — single-file app
+   Data model: items = [{ id, hint, photos:[dataURL...], status, result, error }]
+   ============================================================ */
+
+const LS_ITEMS = "claiminv.items.v1";
+const LS_CFG   = "claiminv.cfg.v1";
+const MAX_PHOTOS_PER_ITEM = 5;
+const MAX_DIM = 1100;          // downscale longest edge (px) for API + storage
+const JPEG_Q  = 0.78;
+const CONCURRENCY = 3;         // items analyzed in parallel
+const WEB_SEARCH_TOOL = "web_search_20250305"; // newer orgs can use web_search_20260318
+
+let items = [];
+let cfg = {
+  mode: "proxy",
+  proxyUrl: "/.netlify/functions/analyze",
+  apiKey: "",
+  model: "claude-sonnet-5",
+  region: "Windsor, Ontario, Canada — prices in CAD",
+  sheetUrl: ""
+};
+let activePhotoTargetId = null;
+
+/* ---------- persistence ---------- */
+function loadState(){
+  try{ const c = JSON.parse(localStorage.getItem(LS_CFG)); if(c) cfg = {...cfg, ...c}; }catch(e){}
+  try{ const i = JSON.parse(localStorage.getItem(LS_ITEMS)); if(Array.isArray(i)) items = i; }catch(e){}
+}
+function saveItems(){
+  try{ localStorage.setItem(LS_ITEMS, JSON.stringify(items)); }
+  catch(e){ toast("Storage full — export & clear to free space."); }
+}
+function saveCfg(){ localStorage.setItem(LS_CFG, JSON.stringify(cfg)); }
+
+/* ---------- utils ---------- */
+const $ = s => document.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2,10);
+let toastT;
+function toast(msg){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2600);
+}
+function money(n){
+  if(n==null||isNaN(n)) return "—";
+  return "$"+Number(n).toLocaleString("en-CA",{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+
+/* downscale an image File -> jpeg dataURL */
+function fileToScaledDataURL(file){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      let {width:w,height:h}=img;
+      if(Math.max(w,h)>MAX_DIM){
+        const s=MAX_DIM/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s);
+      }
+      const c=document.createElement("canvas"); c.width=w; c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg",JPEG_Q));
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("bad image"))};
+    img.src=url;
+  });
+}
+
+/* ---------- rendering ---------- */
+function render(){
+  const wrap=$("#items"); wrap.innerHTML="";
+  $("#empty").style.display = items.length? "none":"block";
+  items.forEach((it,idx)=>wrap.appendChild(renderItem(it,idx)));
+  updateTotals();
+}
+
+function renderItem(it,idx){
+  const el=document.createElement("div"); el.className="item"; el.dataset.id=it.id;
+  const r=it.result||{};
+  const statusCls={idle:"idle",queued:"queued",working:"working",done:"done",error:"error"}[it.status]||"idle";
+  const statusTxt={idle:"Not analyzed",queued:"Queued",working:"Analyzing…",done:"Analyzed",error:"Error"}[it.status]||"Not analyzed";
+
+  el.innerHTML = `
+    <div class="item-head">
+      <span class="item-num">Item ${idx+1}${r.name?` · ${escapeHtml(r.name)}`:""}</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="status ${statusCls}">${statusTxt}</span>
+        <button class="btn ghost sm" data-act="del">✕</button>
+      </div>
+    </div>
+    <div class="item-body">
+      <div class="thumbs">
+        ${it.photos.map((p,i)=>`
+          <div class="thumb"><img src="${p}"/><button class="x" data-act="delphoto" data-i="${i}">✕</button></div>
+        `).join("")}
+        ${it.photos.length<MAX_PHOTOS_PER_ITEM?`
+          <div class="addphoto" data-act="addphoto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Photo
+          </div>`:""}
+      </div>
+      <div class="field">
+        <label>Hint (optional — brand, size, anything you know)</label>
+        <input type="text" data-act="hint" value="${escapeAttr(it.hint||"")}" placeholder="e.g. Samsung 55&quot; TV, or KitchenAid stand mixer"/>
+      </div>
+      ${it.status==="error"?`<div class="err-msg">${escapeHtml(it.error||"Analysis failed")}</div>`:""}
+      ${it.result?renderResult(it):""}
+      <div class="btnrow" style="margin-top:6px">
+        <button class="btn sec sm" data-act="reanalyze">${it.result?"Re-analyze":"Analyze this"}</button>
+      </div>
+    </div>`;
+  return el;
+}
+
+function renderResult(it){
+  const r=it.result;
+  const confCls=(r.confidence||"").toLowerCase();
+  const links=(r.retail_links||[]).map(l=>{
+    const price = l.price_cad!=null? ` — ${money(l.price_cad)}`:"";
+    return `<a href="${escapeAttr(l.url)}" target="_blank" rel="noopener">${escapeHtml(l.retailer||l.url)}${price}</a>`;
+  }).join("");
+  return `
+  <div class="results">
+    <div class="fieldline"><label>Name</label><input type="text" data-edit="name" value="${escapeAttr(r.name||"")}"/></div>
+    <div class="fieldline"><label>Make / Model</label>
+      <div class="grid2">
+        <input type="text" data-edit="make" value="${escapeAttr(r.make||"")}" placeholder="Make"/>
+        <input type="text" data-edit="model" value="${escapeAttr(r.model||"")}" placeholder="Model"/>
+      </div>
+    </div>
+    <div class="fieldline"><label>Category</label><input type="text" data-edit="category" value="${escapeAttr(r.category||"")}"/></div>
+    <div class="fieldline"><label>Est. replacement (CAD)</label><input type="number" data-edit="replacement_cost_cad" value="${r.replacement_cost_cad!=null?r.replacement_cost_cad:""}"/></div>
+    <div class="fieldline"><label>Confidence</label>
+      <div>
+        <span class="conf ${confCls}">${escapeHtml(r.confidence||"—")}</span>
+        ${r.is_equivalent?`<span class="equiv">equivalent item</span>`:""}
+      </div>
+    </div>
+    ${links?`<div class="fieldline"><label>Retail links</label><div class="links">${links}</div></div>`:""}
+    <div class="fieldline"><label>Notes</label><textarea data-edit="notes">${escapeHtml(r.notes||"")}</textarea></div>
+  </div>`;
+}
+
+function escapeHtml(s){return String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+function escapeAttr(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+function updateTotals(){
+  const total=items.reduce((a,it)=>a+(it.result&&+it.result.replacement_cost_cad||0),0);
+  $("#totalLbl").textContent=money(total);
+  $("#countLbl").textContent=items.length+" item"+(items.length===1?"":"s");
+}
+
+/* ---------- item ops ---------- */
+function addItem(){
+  items.push({id:uid(),hint:"",photos:[],status:"idle",result:null,error:null});
+  saveItems(); render();
+  window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"});
+}
+function delItem(id){ items=items.filter(i=>i.id!==id); saveItems(); render(); }
+function itemById(id){ return items.find(i=>i.id===id); }
+
+/* ---------- photo ops ---------- */
+$("#filePicker").addEventListener("change", async e=>{
+  const files=[...e.target.files]; e.target.value="";
+  const it=itemById(activePhotoTargetId); if(!it) return;
+  for(const f of files){
+    if(it.photos.length>=MAX_PHOTOS_PER_ITEM){toast(`Max ${MAX_PHOTOS_PER_ITEM} photos per item`);break;}
+    try{ it.photos.push(await fileToScaledDataURL(f)); }catch(_){ toast("Couldn't read one photo"); }
+  }
+  saveItems(); render();
+});
+
+/* ---------- delegated events ---------- */
+$("#items").addEventListener("click",e=>{
+  const act=e.target.closest("[data-act]")?.dataset.act; if(!act) return;
+  const itemEl=e.target.closest(".item"); const id=itemEl.dataset.id; const it=itemById(id);
+  if(act==="del"){ if(confirm("Delete this item?")) delItem(id); }
+  else if(act==="addphoto"){ activePhotoTargetId=id; $("#filePicker").click(); }
+  else if(act==="delphoto"){ const i=+e.target.dataset.i; it.photos.splice(i,1); saveItems(); render(); }
+  else if(act==="reanalyze"){ analyzeItems([it]); }
+});
+$("#items").addEventListener("input",e=>{
+  const itemEl=e.target.closest(".item"); if(!itemEl) return;
+  const it=itemById(itemEl.dataset.id); if(!it) return;
+  if(e.target.dataset.act==="hint"){ it.hint=e.target.value; saveItems(); }
+  else if(e.target.dataset.edit){
+    if(!it.result) it.result={};
+    let v=e.target.value;
+    if(e.target.dataset.edit==="replacement_cost_cad") v=v===""?null:+v;
+    it.result[e.target.dataset.edit]=v;
+    saveItems(); updateTotals();
+  }
+});
+
+/* ============================================================
+   AI ANALYSIS
+   ============================================================ */
+const SYSTEM_PROMPT = `You are an insurance-claim contents appraiser. You receive one or more photos that ALL show the SAME single household item from different angles, plus an optional user hint.
+
+Task:
+1. Identify the item as precisely as possible: make/brand, specific model or model line, and key specs (size, capacity, colour, etc.).
+2. Use the web_search tool to find the CURRENT replacement cost from Canadian retailers, priced in CAD. Prefer Amazon.ca, Best Buy Canada, Canadian Tire, Home Depot Canada, Walmart Canada, Wayfair.ca, or the manufacturer's Canadian store.
+3. If you cannot identify the exact model, identify the closest CURRENTLY-SOLD equivalent and set is_equivalent to true.
+4. Provide 1-3 real supporting retail links, each with its CAD price if visible.
+5. "replacement_cost_cad" = the price to buy this (or an equivalent) new today in Canada.
+
+Output rules:
+- Output ONLY a single JSON object, no prose, wrapped exactly between the markers ###JSON_START### and ###JSON_END###.
+- Schema:
+{
+  "name": string,                 // short human label, e.g. "Samsung 55\\" 4K TV"
+  "make": string,
+  "model": string,                // "" if unknown
+  "category": string,             // e.g. "Electronics", "Furniture", "Appliance"
+  "key_specs": string,
+  "estimated_condition": string,  // best guess from photos, e.g. "Used - good"
+  "replacement_cost_cad": number,
+  "currency": "CAD",
+  "confidence": "high" | "medium" | "low",
+  "is_equivalent": boolean,
+  "retail_links": [ { "retailer": string, "url": string, "price_cad": number|null } ],
+  "notes": string
+}`;
+
+function buildUserContent(it){
+  const content=[{type:"text",text:
+    `Region context: ${cfg.region}.\n`+
+    (it.hint? `User hint: ${it.hint}\n`:"")+
+    `Analyze the item in the following photo(s) and return the JSON.`}];
+  it.photos.forEach(p=>{
+    const [meta,data]=p.split(",");
+    const mt=(meta.match(/data:(.*?);/)||[])[1]||"image/jpeg";
+    content.push({type:"image",source:{type:"base64",media_type:mt,data}});
+  });
+  return content;
+}
+
+/* one API round-trip; handles proxy vs direct; returns raw messages-API json */
+async function callModel(messages){
+  const body={
+    model: cfg.model,
+    max_tokens: 1800,
+    system: SYSTEM_PROMPT,
+    messages,
+    tools:[{type:WEB_SEARCH_TOOL,name:"web_search",max_uses:5}]
+  };
+  let url, headers={"content-type":"application/json"};
+  if(cfg.mode==="direct"){
+    if(!cfg.apiKey) throw new Error("No API key set (Setup → Direct mode).");
+    url="https://api.anthropic.com/v1/messages";
+    headers["x-api-key"]=cfg.apiKey;
+    headers["anthropic-version"]="2023-06-01";
+    headers["anthropic-dangerous-direct-browser-access"]="true";
+  }else{
+    url=cfg.proxyUrl||"/.netlify/functions/analyze";
+  }
+  const res=await fetch(url,{method:"POST",headers,body:JSON.stringify(body)});
+  if(!res.ok){
+    let t=await res.text();
+    try{ t=JSON.parse(t).error?.message||t; }catch(_){}
+    throw new Error(`API ${res.status}: ${t.slice(0,300)}`);
+  }
+  return res.json();
+}
+
+/* collects text across content blocks + follows pause_turn */
+async function analyzeOne(it){
+  let messages=[{role:"user",content:buildUserContent(it)}];
+  let fullText="";
+  for(let hop=0; hop<5; hop++){
+    const data=await callModel(messages);
+    (data.content||[]).forEach(b=>{ if(b.type==="text"&&b.text) fullText+=b.text+"\n"; });
+    if(data.stop_reason==="pause_turn"){
+      messages.push({role:"assistant",content:data.content});
+      continue; // let it resume the search turn
+    }
+    break;
+  }
+  return parseResult(fullText);
+}
+
+function parseResult(text){
+  let jsonStr=null;
+  const m=text.match(/###JSON_START###([\s\S]*?)###JSON_END###/);
+  if(m) jsonStr=m[1].trim();
+  if(!jsonStr){
+    const f=text.indexOf("{"), l=text.lastIndexOf("}");
+    if(f>=0&&l>f) jsonStr=text.slice(f,l+1);
+  }
+  if(!jsonStr) throw new Error("Model returned no JSON. Raw: "+text.slice(0,160));
+  jsonStr=jsonStr.replace(/^```json/i,"").replace(/^```/,"").replace(/```$/,"").trim();
+  const obj=JSON.parse(jsonStr);
+  if(typeof obj.replacement_cost_cad==="string")
+    obj.replacement_cost_cad=parseFloat(obj.replacement_cost_cad.replace(/[^0-9.]/g,""))||null;
+  return obj;
+}
+
+/* concurrency-limited batch */
+let analyzing=false;
+async function analyzeItems(list){
+  if(analyzing){ toast("Already analyzing…"); return; }
+  const targets=list.filter(it=>it.photos.length>0);
+  if(!targets.length){ toast("Add at least one photo first."); return; }
+  analyzing=true;
+  $("#analyze").disabled=true;
+  const prog=$("#progress"), bar=$("#progressBar"); prog.classList.add("show");
+  targets.forEach(it=>{ it.status="queued"; it.error=null; });
+  render();
+
+  let done=0;
+  const queue=[...targets];
+  async function worker(){
+    while(queue.length){
+      const it=queue.shift();
+      it.status="working"; updateStatus(it);
+      try{
+        it.result=await analyzeOne(it);
+        it.status="done";
+      }catch(err){
+        it.status="error"; it.error=err.message||String(err);
+      }
+      done++; bar.style.width=Math.round(done/targets.length*100)+"%";
+      saveItems(); render();
+    }
+  }
+  await Promise.all(Array.from({length:Math.min(CONCURRENCY,queue.length)},worker));
+
+  analyzing=false; $("#analyze").disabled=false;
+  setTimeout(()=>{prog.classList.remove("show");bar.style.width="0%";},600);
+  const ok=targets.filter(t=>t.status==="done").length;
+  toast(`Analyzed ${ok}/${targets.length}`);
+  if(cfg.sheetUrl) pushToSheet(targets.filter(t=>t.status==="done"));
+}
+function updateStatus(it){
+  const el=document.querySelector(`.item[data-id="${it.id}"] .status`);
+  if(el){ el.className="status working"; el.textContent="Analyzing…"; }
+}
+
+/* ============================================================
+   EXPORT
+   ============================================================ */
+$("#exportMenuBtn").addEventListener("click",()=>{
+  const c=confirm("OK = Excel (.xlsx, with embedded photos)\nCancel = choose CSV instead");
+  if(c) exportXlsx(); else { if(confirm("OK = CSV export\nCancel = cancel")) exportCsv(); }
+});
+
+async function exportXlsx(){
+  const done=items.filter(i=>i.result);
+  if(!done.length){ toast("Nothing analyzed to export yet."); return; }
+  toast("Building Excel file…");
+  const wb=new ExcelJS.Workbook();
+  const ws=wb.addWorksheet("Inventory");
+  ws.columns=[
+    {header:"#",key:"n",width:5},
+    {header:"Photo",key:"photo",width:16},
+    {header:"Item",key:"name",width:26},
+    {header:"Make",key:"make",width:16},
+    {header:"Model",key:"model",width:18},
+    {header:"Category",key:"category",width:16},
+    {header:"Condition",key:"cond",width:14},
+    {header:"Est. Replacement (CAD)",key:"cost",width:20},
+    {header:"Confidence",key:"conf",width:12},
+    {header:"Equivalent?",key:"equiv",width:12},
+    {header:"Retail Links",key:"links",width:50},
+    {header:"Notes",key:"notes",width:34},
+  ];
+  ws.getRow(1).font={bold:true};
+  ws.getRow(1).alignment={vertical:"middle"};
+
+  let total=0;
+  done.forEach((it,idx)=>{
+    const r=it.result;
+    const cost=+r.replacement_cost_cad||0; total+=cost;
+    const links=(r.retail_links||[]).map(l=>`${l.retailer||""}: ${l.url}${l.price_cad!=null?` ($${l.price_cad})`:""}`).join("\n");
+    const row=ws.addRow({
+      n:idx+1, photo:"", name:r.name||"", make:r.make||"", model:r.model||"",
+      category:r.category||"", cond:r.estimated_condition||"",
+      cost:cost, conf:r.confidence||"", equiv:r.is_equivalent?"Yes":"No",
+      links:links, notes:r.notes||""
+    });
+    row.height=82;
+    row.alignment={vertical:"top",wrapText:true};
+    row.getCell("cost").numFmt='"$"#,##0';
+    // embed first photo
+    if(it.photos[0]){
+      const b64=it.photos[0].split(",")[1];
+      const imgId=wb.addImage({base64:b64,extension:"jpeg"});
+      ws.addImage(imgId,{
+        tl:{col:1.1,row:row.number-1+0.1},
+        ext:{width:100,height:75}
+      });
+    }
+  });
+  const tRow=ws.addRow({model:"TOTAL",cost:total});
+  tRow.font={bold:true}; tRow.getCell("cost").numFmt='"$"#,##0';
+
+  const buf=await wb.xlsx.writeBuffer();
+  download(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),
+           `claim-inventory-${dateStamp()}.xlsx`);
+}
+
+function exportCsv(){
+  const done=items.filter(i=>i.result);
+  if(!done.length){ toast("Nothing analyzed to export yet."); return; }
+  const head=["#","Item","Make","Model","Category","Condition","Est. Replacement (CAD)","Confidence","Equivalent","Retail Links","Notes"];
+  const rows=done.map((it,idx)=>{
+    const r=it.result;
+    const links=(r.retail_links||[]).map(l=>`${l.retailer||""}: ${l.url}${l.price_cad!=null?` ($${l.price_cad})`:""}`).join(" | ");
+    return [idx+1,r.name,r.make,r.model,r.category,r.estimated_condition,+r.replacement_cost_cad||0,r.confidence,r.is_equivalent?"Yes":"No",links,r.notes]
+      .map(csvCell).join(",");
+  });
+  const total=done.reduce((a,it)=>a+(+it.result.replacement_cost_cad||0),0);
+  rows.push(["","TOTAL","","","","",total,"","","",""].map(csvCell).join(","));
+  download(new Blob([head.map(csvCell).join(",")+"\n"+rows.join("\n")],{type:"text/csv"}),
+           `claim-inventory-${dateStamp()}.csv`);
+}
+function csvCell(v){ v=v==null?"":String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+function download(blob,name){
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function dateStamp(){ return new Date().toISOString().slice(0,10); }
+
+/* ---------- optional Google Sheets sync ---------- */
+async function pushToSheet(list){
+  if(!cfg.sheetUrl||!list.length) return;
+  for(const it of list){
+    const r=it.result;
+    const payload={
+      name:r.name,make:r.make,model:r.model,category:r.category,
+      condition:r.estimated_condition,cost:+r.replacement_cost_cad||0,
+      confidence:r.confidence,is_equivalent:r.is_equivalent,
+      links:(r.retail_links||[]).map(l=>`${l.retailer||""}: ${l.url}`).join(" | "),
+      notes:r.notes, photo:it.photos[0]||""
+    };
+    try{
+      await fetch(cfg.sheetUrl,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
+    }catch(e){ /* Apps Script often blocks CORS reads; the write still lands */ }
+  }
+  toast("Synced to Google Sheet");
+}
+
+/* ============================================================
+   CONFIG UI
+   ============================================================ */
+function paintConfig(){
+  $("#mode").value=cfg.mode;
+  $("#proxyUrl").value=cfg.proxyUrl;
+  $("#apiKey").value=cfg.apiKey;
+  $("#model").value=cfg.model;
+  $("#region").value=cfg.region;
+  $("#sheetUrl").value=cfg.sheetUrl;
+  toggleModeFields();
+}
+function toggleModeFields(){
+  const direct=$("#mode").value==="direct";
+  $("#keyField").style.display=direct?"block":"none";
+  $("#proxyField").style.display=direct?"none":"block";
+}
+$("#mode").addEventListener("change",toggleModeFields);
+$("#btnConfig").addEventListener("click",()=>{
+  const c=$("#configCard"); c.style.display=c.style.display==="none"?"block":"none";
+  if(c.style.display==="block") c.scrollIntoView({behavior:"smooth"});
+});
+$("#saveConfig").addEventListener("click",()=>{
+  cfg.mode=$("#mode").value;
+  cfg.proxyUrl=$("#proxyUrl").value.trim()||"/.netlify/functions/analyze";
+  cfg.apiKey=$("#apiKey").value.trim();
+  cfg.model=$("#model").value.trim()||"claude-sonnet-5";
+  cfg.region=$("#region").value.trim();
+  cfg.sheetUrl=$("#sheetUrl").value.trim();
+  saveCfg(); toast("Setup saved"); $("#configCard").style.display="none";
+});
+$("#clearAll").addEventListener("click",()=>{
+  if(confirm("Delete ALL items and photos? This cannot be undone.")){
+    items=[]; saveItems(); render(); toast("Cleared");
+  }
+});
+
+/* ---------- wire footer ---------- */
+$("#addItem").addEventListener("click",addItem);
+$("#analyze").addEventListener("click",()=>analyzeItems(items));
+
+/* ---------- boot ---------- */
+loadState();
+paintConfig();
+render();
+if(!localStorage.getItem(LS_CFG)) $("#configCard").style.display="block";
+</script>
+</body>
+</html>
