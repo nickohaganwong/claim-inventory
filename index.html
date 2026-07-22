@@ -104,6 +104,82 @@
   hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   code{background:var(--panel2);padding:1px 5px;border-radius:5px;font-size:12px}
 </style>
+<style>
+  /* ===== v2 mobile-optimized layer (overrides the base above) ===== */
+  body{padding-bottom:164px;-webkit-tap-highlight-color:transparent}
+
+  /* 16px inputs stop iOS from zooming on focus; bigger tap area */
+  input[type=text],input[type=password],input[type=url],input[type=number],select,textarea{
+    font-size:16px;padding:12px 13px;border-radius:11px;-webkit-appearance:none;appearance:none;
+  }
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+  label{font-weight:500;margin-bottom:5px}
+
+  .btn{min-height:46px;border-radius:11px;transition:background .15s,transform .05s}
+  .btn:active{transform:scale(.98)}
+  .btn.sm{min-height:0;padding:9px 13px}
+  .btn.block{width:100%}
+
+  /* item card */
+  .item{border-radius:16px}
+  .item.done{border-color:#264032}
+  .item.error{border-color:#4a2a2f}
+  .item-head{border-bottom:none;padding:13px 15px 6px;align-items:flex-start}
+  .item-head-l{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .item-num{font-size:10.5px;letter-spacing:.4px;text-transform:uppercase}
+  .item-title{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60vw}
+  .item-head-r{display:flex;gap:8px;align-items:center;flex-shrink:0}
+  .status.working{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+  .icon-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+  .icon-btn:active{background:var(--chip)}
+  .item-body{padding:0 15px 15px}
+
+  /* result summary */
+  .results{border-top:1px solid var(--line);margin-top:6px;padding-top:14px}
+  .res-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .res-name{font-size:16px;font-weight:650;line-height:1.25}
+  .res-sub{font-size:13px;color:var(--muted);margin-top:3px}
+  .res-price{font-size:22px;font-weight:700;white-space:nowrap;text-align:right;line-height:1.1}
+  .res-price span{font-size:10.5px;font-weight:600;color:var(--muted);display:block;letter-spacing:.5px}
+  .badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+  .conf{display:inline-block;font-size:11px;padding:3px 9px;border-radius:12px;background:var(--chip);color:var(--muted);font-weight:600}
+  .conf.high{color:var(--good)} .conf.medium{color:var(--warn)} .conf.low{color:var(--bad)}
+  .equiv{display:inline-block;font-size:11px;padding:3px 9px;border-radius:12px;background:#3a3320;color:var(--warn);font-weight:600;margin:0}
+  .res-links{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+  .res-links a{color:var(--accent);font-size:13px;text-decoration:none;display:flex;gap:8px;align-items:baseline}
+  .res-links a:active{text-decoration:underline}
+  .res-links a .r{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .res-links a .p{color:var(--muted);flex-shrink:0}
+  .res-actions{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}
+  .res-edit{display:none;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+  .results.editing .res-edit{display:block}
+  .results.editing .toggle-edit{color:var(--accent);border-color:var(--accent)}
+  .fieldline{display:block;margin-bottom:11px}
+  .fieldline label{margin-bottom:5px}
+  .err-msg{background:#2a1a1d;border:1px solid #4a2a2f;padding:10px 12px;border-radius:10px;margin-top:10px}
+
+  .empty{padding:52px 22px;line-height:1.6}
+
+  /* footer */
+  .footer-bar{padding:10px 14px calc(10px + env(safe-area-inset-bottom))}
+  .footer-inner{max-width:900px;margin:0 auto}
+  .totals{display:flex;justify-content:space-between;align-items:baseline;padding:2px 2px 10px;font-size:13px;color:var(--muted)}
+  .totals .big{color:var(--text);font-size:19px;font-weight:700}
+  .foot-actions{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:9px}
+  .foot-actions .btn{padding:12px 8px}
+  .progress{margin-top:9px}
+
+  .toast{bottom:150px}
+
+  /* export bottom sheet */
+  .sheet-backdrop{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center}
+  .sheet-backdrop.show{display:flex}
+  .sheet{background:var(--panel);border:1px solid var(--line);border-bottom:none;border-radius:18px 18px 0 0;width:100%;max-width:520px;padding:18px 16px calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;animation:rise .2s ease}
+  @keyframes rise{from{transform:translateY(28px)}to{transform:translateY(0)}}
+  .sheet-title{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:600;margin-bottom:4px;text-align:center}
+</style>
+
 </head>
 <body>
 <header>
@@ -163,17 +239,27 @@
 </main>
 
 <div class="footer-bar">
-  <div class="inner">
+  <div class="footer-inner">
     <div class="totals">
-      <span id="countLbl">0 items</span> &nbsp;·&nbsp; est. <b id="totalLbl">$0</b> CAD
+      <span id="countLbl">0 items</span>
+      <span>est. <span class="big" id="totalLbl">$0</span> CAD</span>
     </div>
-    <div class="btnrow">
-      <button class="btn sec sm" id="addItem">＋ Add item</button>
-      <button class="btn sm" id="analyze">Analyze all</button>
-      <button class="btn sec sm" id="exportMenuBtn">Export ▾</button>
+    <div class="foot-actions">
+      <button class="btn sec" id="addItem">＋ Add</button>
+      <button class="btn" id="analyze">Analyze all</button>
+      <button class="btn sec" id="exportMenuBtn">Export</button>
     </div>
+    <div class="progress" id="progress"><div id="progressBar"></div></div>
   </div>
-  <div class="progress" id="progress"><div id="progressBar"></div></div>
+</div>
+
+<div class="sheet-backdrop" id="exportSheet">
+  <div class="sheet">
+    <div class="sheet-title">Export inventory</div>
+    <button class="btn" data-export="xlsx">Excel (.xlsx) · photos embedded</button>
+    <button class="btn sec" data-export="csv">CSV · data only</button>
+    <button class="btn ghost" data-export="cancel">Cancel</button>
+  </div>
 </div>
 
 <input type="file" id="filePicker" accept="image/*" multiple style="display:none" />
@@ -257,17 +343,25 @@ function render(){
 }
 
 function renderItem(it,idx){
-  const el=document.createElement("div"); el.className="item"; el.dataset.id=it.id;
+  const el=document.createElement("div");
+  el.className="item"+(it.status==="done"?" done":it.status==="error"?" error":"");
+  el.dataset.id=it.id;
   const r=it.result||{};
   const statusCls={idle:"idle",queued:"queued",working:"working",done:"done",error:"error"}[it.status]||"idle";
   const statusTxt={idle:"Not analyzed",queued:"Queued",working:"Analyzing…",done:"Analyzed",error:"Error"}[it.status]||"Not analyzed";
+  const title = r.name ? escapeHtml(r.name)
+              : it.photos.length ? `${it.photos.length} photo${it.photos.length>1?"s":""} added`
+              : "No photos yet";
 
   el.innerHTML = `
     <div class="item-head">
-      <span class="item-num">Item ${idx+1}${r.name?` · ${escapeHtml(r.name)}`:""}</span>
-      <div style="display:flex;gap:8px;align-items:center">
+      <div class="item-head-l">
+        <span class="item-num">Item ${idx+1}</span>
+        <span class="item-title">${title}</span>
+      </div>
+      <div class="item-head-r">
         <span class="status ${statusCls}">${statusTxt}</span>
-        <button class="btn ghost sm" data-act="del">✕</button>
+        <button class="icon-btn" data-act="del" aria-label="Delete item">✕</button>
       </div>
     </div>
     <div class="item-body">
@@ -283,13 +377,11 @@ function renderItem(it,idx){
       </div>
       <div class="field">
         <label>Hint (optional — brand, size, anything you know)</label>
-        <input type="text" data-act="hint" value="${escapeAttr(it.hint||"")}" placeholder="e.g. Samsung 55&quot; TV, or KitchenAid stand mixer"/>
+        <input type="text" data-act="hint" value="${escapeAttr(it.hint||"")}" placeholder="e.g. Samsung 55&quot; TV, or KitchenAid mixer"/>
       </div>
       ${it.status==="error"?`<div class="err-msg">${escapeHtml(it.error||"Analysis failed")}</div>`:""}
-      ${it.result?renderResult(it):""}
-      <div class="btnrow" style="margin-top:6px">
-        <button class="btn sec sm" data-act="reanalyze">${it.result?"Re-analyze":"Analyze this"}</button>
-      </div>
+      ${it.result?renderResult(it):`
+      <button class="btn sec sm" data-act="reanalyze">Analyze this item</button>`}
     </div>`;
   return el;
 }
@@ -297,29 +389,41 @@ function renderItem(it,idx){
 function renderResult(it){
   const r=it.result;
   const confCls=(r.confidence||"").toLowerCase();
+  const sub=[r.make,r.model,r.category].filter(Boolean).join(" · ");
   const links=(r.retail_links||[]).map(l=>{
-    const price = l.price_cad!=null? ` — ${money(l.price_cad)}`:"";
-    return `<a href="${escapeAttr(l.url)}" target="_blank" rel="noopener">${escapeHtml(l.retailer||l.url)}${price}</a>`;
+    const price = l.price_cad!=null? `<span class="p">${money(l.price_cad)}</span>`:"";
+    return `<a href="${escapeAttr(l.url)}" target="_blank" rel="noopener"><span class="r">${escapeHtml(l.retailer||l.url)}</span>${price}</a>`;
   }).join("");
   return `
   <div class="results">
-    <div class="fieldline"><label>Name</label><input type="text" data-edit="name" value="${escapeAttr(r.name||"")}"/></div>
-    <div class="fieldline"><label>Make / Model</label>
+    <div class="res-top">
+      <div style="min-width:0">
+        <div class="res-name js-name">${escapeHtml(r.name||"Unidentified item")}</div>
+        ${sub?`<div class="res-sub">${escapeHtml(sub)}</div>`:""}
+      </div>
+      <div class="res-price"><span class="js-price">${money(r.replacement_cost_cad)}</span><span>CAD</span></div>
+    </div>
+    ${(r.confidence||r.is_equivalent)?`<div class="badges">
+      ${r.confidence?`<span class="conf ${confCls}">${escapeHtml(r.confidence)} confidence</span>`:""}
+      ${r.is_equivalent?`<span class="equiv">equivalent item</span>`:""}
+    </div>`:""}
+    ${links?`<div class="res-links">${links}</div>`:""}
+    <div class="res-actions">
+      <button class="btn sec sm toggle-edit" data-act="toggleEdit">Edit details</button>
+      <button class="btn ghost sm" data-act="reanalyze">Re-analyze</button>
+    </div>
+    <div class="res-edit">
+      <div class="fieldline"><label>Name</label><input type="text" data-edit="name" value="${escapeAttr(r.name||"")}"/></div>
       <div class="grid2">
-        <input type="text" data-edit="make" value="${escapeAttr(r.make||"")}" placeholder="Make"/>
-        <input type="text" data-edit="model" value="${escapeAttr(r.model||"")}" placeholder="Model"/>
+        <div class="fieldline"><label>Make</label><input type="text" data-edit="make" value="${escapeAttr(r.make||"")}" placeholder="Make"/></div>
+        <div class="fieldline"><label>Model</label><input type="text" data-edit="model" value="${escapeAttr(r.model||"")}" placeholder="Model"/></div>
       </div>
-    </div>
-    <div class="fieldline"><label>Category</label><input type="text" data-edit="category" value="${escapeAttr(r.category||"")}"/></div>
-    <div class="fieldline"><label>Est. replacement (CAD)</label><input type="number" data-edit="replacement_cost_cad" value="${r.replacement_cost_cad!=null?r.replacement_cost_cad:""}"/></div>
-    <div class="fieldline"><label>Confidence</label>
-      <div>
-        <span class="conf ${confCls}">${escapeHtml(r.confidence||"—")}</span>
-        ${r.is_equivalent?`<span class="equiv">equivalent item</span>`:""}
+      <div class="grid2">
+        <div class="fieldline"><label>Category</label><input type="text" data-edit="category" value="${escapeAttr(r.category||"")}"/></div>
+        <div class="fieldline"><label>Est. replacement (CAD)</label><input type="number" data-edit="replacement_cost_cad" value="${r.replacement_cost_cad!=null?r.replacement_cost_cad:""}"/></div>
       </div>
+      <div class="fieldline"><label>Notes</label><textarea data-edit="notes">${escapeHtml(r.notes||"")}</textarea></div>
     </div>
-    ${links?`<div class="fieldline"><label>Retail links</label><div class="links">${links}</div></div>`:""}
-    <div class="fieldline"><label>Notes</label><textarea data-edit="notes">${escapeHtml(r.notes||"")}</textarea></div>
   </div>`;
 }
 
@@ -360,6 +464,7 @@ $("#items").addEventListener("click",e=>{
   else if(act==="addphoto"){ activePhotoTargetId=id; $("#filePicker").click(); }
   else if(act==="delphoto"){ const i=+e.target.dataset.i; it.photos.splice(i,1); saveItems(); render(); }
   else if(act==="reanalyze"){ analyzeItems([it]); }
+  else if(act==="toggleEdit"){ e.target.closest(".results")?.classList.toggle("editing"); }
 });
 $("#items").addEventListener("input",e=>{
   const itemEl=e.target.closest(".item"); if(!itemEl) return;
@@ -370,6 +475,14 @@ $("#items").addEventListener("input",e=>{
     let v=e.target.value;
     if(e.target.dataset.edit==="replacement_cost_cad") v=v===""?null:+v;
     it.result[e.target.dataset.edit]=v;
+    // keep the summary in sync without a full re-render (preserves scroll/focus)
+    if(e.target.dataset.edit==="name"){
+      const n=itemEl.querySelector(".js-name"); if(n) n.textContent=v||"Unidentified item";
+      const t=itemEl.querySelector(".item-title"); if(t) t.textContent=v||"Item";
+    }
+    if(e.target.dataset.edit==="replacement_cost_cad"){
+      const p=itemEl.querySelector(".js-price"); if(p) p.textContent=money(v);
+    }
     saveItems(); updateTotals();
   }
 });
@@ -522,8 +635,15 @@ function updateStatus(it){
    EXPORT
    ============================================================ */
 $("#exportMenuBtn").addEventListener("click",()=>{
-  const c=confirm("OK = Excel (.xlsx, with embedded photos)\nCancel = choose CSV instead");
-  if(c) exportXlsx(); else { if(confirm("OK = CSV export\nCancel = cancel")) exportCsv(); }
+  if(!items.some(i=>i.result)){ toast("Nothing analyzed to export yet."); return; }
+  $("#exportSheet").classList.add("show");
+});
+$("#exportSheet").addEventListener("click",e=>{
+  if(e.target.id==="exportSheet"){ $("#exportSheet").classList.remove("show"); return; }
+  const ex=e.target.closest("[data-export]")?.dataset.export; if(!ex) return;
+  $("#exportSheet").classList.remove("show");
+  if(ex==="xlsx") exportXlsx();
+  else if(ex==="csv") exportCsv();
 });
 
 async function exportXlsx(){
